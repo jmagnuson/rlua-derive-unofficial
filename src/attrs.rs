@@ -17,7 +17,7 @@ pub fn parse_enum_container_attrs(attrs: &[Attribute]) -> EnumContainerAttrs {
     };
 
     for attr in attrs {
-        if attr.path == syn::Ident::new("rlua", Span::call_site()).into() {
+        if attr.path == syn::Ident::new("mlua", Span::call_site()).into() {
             match attr.parse_meta() {
                 Ok(syn::Meta::Path(_ident)) => {
                     panic!("path");

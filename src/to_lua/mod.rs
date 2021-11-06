@@ -42,14 +42,14 @@ fn struct_named_to_lua(fields: &FieldsNamed, name: &Ident) -> TokenStream {
 
     let gen = quote!{
         #[automatically_derived]
-        impl<'lua> ::rlua::ToLua<'lua> for #name {
-            fn to_lua(self, lua: ::rlua::Context<'lua>) -> ::rlua::Result<::rlua::Value<'lua>> {
-                use ::rlua::Table;
+        impl<'lua> ::mlua::ToLua<'lua> for #name {
+            fn to_lua(self, lua: &'lua ::mlua::Lua) -> ::mlua::Result<::mlua::Value<'lua>> {
+                use ::mlua::Table;
                 let t = lua.create_table()?;
 
                 #fields_code
 
-                Ok(::rlua::Value::Table(t))
+                Ok(::mlua::Value::Table(t))
             }
         }
     };
@@ -75,14 +75,14 @@ fn struct_unnamed_to_lua(fields: &FieldsUnnamed, name: &Ident) -> TokenStream {
 
     let gen = quote!{
         #[automatically_derived]
-        impl<'lua> ::rlua::ToLua<'lua> for #name {
-            fn to_lua(self, lua: ::rlua::Context<'lua>) -> ::rlua::Result<::rlua::Value<'lua>> {
-                use ::rlua::Table;
+        impl<'lua> ::mlua::ToLua<'lua> for #name {
+            fn to_lua(self, lua: &'lua ::mlua::Lua) -> ::mlua::Result<::mlua::Value<'lua>> {
+                use ::mlua::Table;
                 let t = lua.create_table()?;
 
                 #fields_code
 
-                Ok(::rlua::Value::Table(t))
+                Ok(::mlua::Value::Table(t))
             }
         }
     };
@@ -92,11 +92,11 @@ fn struct_unnamed_to_lua(fields: &FieldsUnnamed, name: &Ident) -> TokenStream {
 fn struct_unit_to_lua(name: &Ident) -> TokenStream {
     let gen = quote! {
         #[automatically_derived]
-        impl<'lua> ::rlua::ToLua<'lua> for #name {
-            fn to_lua(self, lua: ::rlua::Context<'lua>) -> ::rlua::Result<::rlua::Value<'lua>> {
-                use ::rlua::Table;
+        impl<'lua> ::mlua::ToLua<'lua> for #name {
+            fn to_lua(self, lua: &'lua ::mlua::Lua) -> ::mlua::Result<::mlua::Value<'lua>> {
+                use ::mlua::Table;
                 let t = lua.create_table()?;
-                Ok(::rlua::Value::Table(t))
+                Ok(::mlua::Value::Table(t))
             }
         }
     };
@@ -121,7 +121,7 @@ fn enum_to_lua(name: &Ident, e: &DataEnum, attrs: EnumContainerAttrs, generics: 
         let mut g = quote!{where};
         generics.type_params().for_each(|type_param| {
             let t = &type_param.ident;
-            g.extend(quote!{#t: rlua::ToLua<'lua> + Send, })
+            g.extend(quote!{#t: mlua::ToLua<'lua> + Send, })
         });
         g
     };
@@ -158,7 +158,7 @@ fn enum_to_lua(name: &Ident, e: &DataEnum, attrs: EnumContainerAttrs, generics: 
                             let t = lua.create_table()?;
                             t.set(#content_key, v)?;
                             #set_tag
-                            Ok(::rlua::Value::Table(t))
+                            Ok(::mlua::Value::Table(t))
                         },
                     });
                 },
@@ -169,8 +169,8 @@ fn enum_to_lua(name: &Ident, e: &DataEnum, attrs: EnumContainerAttrs, generics: 
 
     let gen = quote! {
         #[automatically_derived]
-        impl<'lua, #generic_types> ::rlua::ToLua<'lua> for #name<#generic_types> #where_generics {
-            fn to_lua(self, lua: ::rlua::Context<'lua>) -> ::rlua::Result<::rlua::Value<'lua>> {
+        impl<'lua, #generic_types> ::mlua::ToLua<'lua> for #name<#generic_types> #where_generics {
+            fn to_lua(self, lua: &'lua ::mlua::Lua) -> ::mlua::Result<::mlua::Value<'lua>> {
                 match self {
                     #match_arms
                 }

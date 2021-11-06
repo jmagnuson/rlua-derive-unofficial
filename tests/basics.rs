@@ -1,6 +1,6 @@
-use rlua_derive_unofficial::{ToLua, FromLua};
+use mlua_derive_unofficial::{ToLua, FromLua};
 
-use rlua::{ToLua,FromLua};
+use mlua::{ToLua,FromLua};
 
 #[derive(Debug, Clone, PartialEq, ToLua, FromLua)]
 struct Named {
@@ -20,21 +20,21 @@ enum NumOrStr {
 }
 
 #[derive(Debug, Clone, PartialEq, ToLua, FromLua)]
-#[rlua(tag = "type")]
+#[mlua(tag = "type")]
 enum TaggedNumOrStr {
     Num(u64),
     Str(String),
 }
 
 #[derive(Debug, Clone, PartialEq, ToLua, FromLua)]
-#[rlua(tag = "type", content = "val")]
+#[mlua(tag = "type", content = "val")]
 enum TaggedContentNumOrStr {
     Num(u64),
     Str(String),
 }
 
 #[derive(Debug, Clone, PartialEq, ToLua)]
-#[rlua(tag = "type", content = "val")]
+#[mlua(tag = "type", content = "val")]
 enum GenericEnum<T> {
     Yes(T),
     No(T),
@@ -42,17 +42,15 @@ enum GenericEnum<T> {
 
 #[test]
 fn basic_unnamed() {
-    use rlua::Lua;
+    use mlua::Lua;
     let lua = Lua::new();
 
     let table = Unnamed(1,"2".to_string());
 
     let round_trip_table = {
         let table = table.clone();
-        lua.context(|ctx| {
-            let lt = table.to_lua(ctx).unwrap();
-            Unnamed::from_lua(lt, ctx).unwrap()
-        })
+        let lt = table.to_lua(&lua).unwrap();
+        Unnamed::from_lua(lt, &lua).unwrap()
     };
 
     assert_eq!(table, round_trip_table);
@@ -60,17 +58,15 @@ fn basic_unnamed() {
 
 #[test]
 fn basic_unit() {
-    use rlua::Lua;
+    use mlua::Lua;
     let lua = Lua::new();
 
     let table = Unit;
 
     let round_trip_table = {
         let table = table.clone();
-        lua.context(|ctx| {
-            let lt = table.to_lua(ctx).unwrap();
-            Unit::from_lua(lt, ctx).unwrap()
-        })
+        let lt = table.to_lua(&lua).unwrap();
+        Unit::from_lua(lt, &lua).unwrap()
     };
 
     assert_eq!(table, round_trip_table);
@@ -78,53 +74,47 @@ fn basic_unit() {
 
 #[test]
 fn basic_enum_to() {
-    use rlua::Lua;
+    use mlua::Lua;
     let lua = Lua::new();
 
     let nos = NumOrStr::Num(37);
 
-    lua.context(|l| {
-        l.globals().set("nos", nos).unwrap();
-        l.load(
-            r#"
+    lua.globals().set("nos", nos).unwrap();
+    lua.load(
+        r#"
             assert(type(nos) == "table")
             assert(nos.num == 37)
         "#,
-        )
+    )
         .exec()
-        .unwrap()
-    });
+        .unwrap();
 }
 
 #[test]
 fn basic_enum_from() {
-    use rlua::Lua;
+    use mlua::Lua;
     let lua = Lua::new();
-
-    let nos = lua.context(|l| {
-        l.load(
-            r#"
+    let nos = lua.load(
+        r#"
             return {num = 63}
         "#,
-        )
+    )
         .eval::<NumOrStr>()
-        .unwrap()
-    });
+        .unwrap();
+
 
     assert_eq!(nos, NumOrStr::Num(63));
 }
 
 #[test]
 fn tagged_content_enum_to() {
-    use rlua::Lua;
+    use mlua::Lua;
     let lua = Lua::new();
 
     let tnos = TaggedContentNumOrStr::Num(37);
-
-    lua.context(|l| {
-        l.globals().set("tnos", tnos).unwrap();
-        l.load(
-            r#"
+    lua.globals().set("tnos", tnos).unwrap();
+    lua.load(
+        r#"
             assert(type(tnos) == "table", "not table")
             assert(tnos.type ~= nil, "type not specified")
             assert(tnos.type == "num", "type not correct")
@@ -132,43 +122,37 @@ fn tagged_content_enum_to() {
             assert(tnos.val ~= nil, "value not found")
             assert(tnos.val == 37, "value in not found")
         "#,
-        )
+    )
         .exec()
-        .unwrap()
-    });
+        .unwrap();
 }
 #[test]
 fn tagged_content_enum_from() {
-    use rlua::Lua;
+    use mlua::Lua;
     let lua = Lua::new();
 
-    let nos = lua.context(|l| {
-        l.load(
-            r#"
+    let nos = lua.load(
+        r#"
             return {type = "num", val = 63}
         "#,
-        )
+    )
         .eval::<TaggedContentNumOrStr>()
-        .unwrap()
-    });
+        .unwrap();
 
     assert_eq!(nos, TaggedContentNumOrStr::Num(63));
 }
 
 #[test]
 fn understand_stuff() {
-    use rlua::Lua;
+    use mlua::Lua;
     let lua = Lua::new();
-
-    let () = lua.context(|l| {
-        l.load(
-            r#"
+    lua.load(
+        r#"
             return {}
         "#,
-        )
+    )
         .eval::<()>()
-        .unwrap()
-    });
+        .unwrap();
 
     assert_eq!((), ());
 }

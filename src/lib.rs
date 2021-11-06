@@ -9,8 +9,8 @@
 //! The first example shows that basic usage of this library on a struct.
 //!
 //! ```rust
-//! use rlua::Lua;
-//! use rlua_derive_unofficial::{FromLua, ToLua};
+//! use mlua::Lua;
+//! use mlua_derive_unofficial::{FromLua, ToLua};
 //!
 //! #[derive(FromLua, ToLua)]
 //! struct SimpleStruct {
@@ -21,9 +21,8 @@
 //! let simp = SimpleStruct{ message: "foo".to_string(), count: 37 };
 //!
 //! let lua = Lua::new();
-//! let ret = lua.context(|l| {
-//!     l.globals().set("simp", simp).unwrap();
-//!     l.load(
+//!     lua.globals().set("simp", simp).unwrap();
+//!     let ret = lua.load(
 //!         r#"
 //!         assert(type(simp) == "table")
 //!         assert(simp.message == "foo")
@@ -33,8 +32,7 @@
 //!     "#,
 //!     )
 //!     .eval::<SimpleStruct>()
-//!     .unwrap()
-//! });
+//!     .unwrap();
 //!
 //! assert!(ret.message == "bar");
 //! assert!(ret.count == 42);
@@ -43,8 +41,8 @@
 //! This example show the use on a basic Enum
 //!
 //! ```rust
-//! use rlua::Lua;
-//! use rlua_derive_unofficial::{FromLua, ToLua};
+//! use mlua::Lua;
+//! use mlua_derive_unofficial::{FromLua, ToLua};
 //!
 //! # #[derive(PartialEq)]
 //! #[derive(FromLua, ToLua)]
@@ -56,9 +54,8 @@
 //! let simp = SimpleEnum::Message("foo".to_string());
 //!
 //! let lua = Lua::new();
-//! let ret = lua.context(|l| {
-//!     l.globals().set("simp", simp).unwrap();
-//!     l.load(
+//!     lua.globals().set("simp", simp).unwrap();
+//!     let ret = lua.load(
 //!         r#"
 //!         assert(type(simp) == "table")
 //!         assert(simp.message == "foo")
@@ -67,8 +64,7 @@
 //!     "#,
 //!     )
 //!     .eval::<SimpleEnum>()
-//!     .unwrap()
-//! });
+//!     .unwrap();
 //!
 //! assert!(ret == SimpleEnum::Count(42));
 //! ```
@@ -83,8 +79,8 @@
 //! # Struct
 //!
 //! ```rust
-//! # use rlua::Lua;
-//! # use rlua_derive_unofficial::{FromLua, ToLua};
+//! # use mlua::Lua;
+//! # use mlua_derive_unofficial::{FromLua, ToLua};
 //! # #[derive(FromLua, ToLua)]
 //! struct SimpleStruct {
 //!     message: String,
@@ -99,8 +95,8 @@
 //! # Enum
 //!
 //! ```rust
-//! # use rlua::Lua;
-//! # use rlua_derive_unofficial::{FromLua, ToLua};
+//! # use mlua::Lua;
+//! # use mlua_derive_unofficial::{FromLua, ToLua};
 //! # #[derive(FromLua, ToLua)]
 //! enum SimpleEnum {
 //!     Message(String),
@@ -122,10 +118,10 @@
 //! enum variant name.
 //!
 //! ```rust
-//! # use rlua::Lua;
-//! # use rlua_derive_unofficial::{FromLua, ToLua};
+//! # use mlua::Lua;
+//! # use mlua_derive_unofficial::{FromLua, ToLua};
 //! # #[derive(FromLua, ToLua)]
-//! #[rlua(tag = "type")]
+//! #[mlua(tag = "type")]
 //! enum SimpleEnum {
 //!     Message(String),
 //!     Count(u64),
@@ -142,10 +138,10 @@
 //! option will likey be used in conjunction with `tag`.
 //!
 //! ```rust
-//! # use rlua::Lua;
-//! # use rlua_derive_unofficial::{FromLua, ToLua};
+//! # use mlua::Lua;
+//! # use mlua_derive_unofficial::{FromLua, ToLua};
 //! # #[derive(FromLua, ToLua)]
-//! #[rlua(tag = "type", content = "val")]
+//! #[mlua(tag = "type", content = "val")]
 //! enum SimpleEnum {
 //!     Message(String),
 //!     Count(u64),
@@ -161,10 +157,10 @@
 //! `untagged` allows you to pass the value contained in the enum directly.
 //!
 //! ```rust
-//! # use rlua::Lua;
-//! # use rlua_derive_unofficial::{FromLua, ToLua};
+//! # use mlua::Lua;
+//! # use mlua_derive_unofficial::{FromLua, ToLua};
 //! # #[derive(FromLua, ToLua)]
-//! #[rlua(tag = "type", content = "val")]
+//! #[mlua(tag = "type", content = "val")]
 //! enum SimpleEnum {
 //!     Message(String),
 //!     Count(u64),
@@ -183,10 +179,10 @@
 //! This is a list of things that I would like to work, but that don't.
 //!
 //! ```rust
-//! # use rlua::Lua;
-//! # use rlua_derive_unofficial::{FromLua, ToLua};
+//! # use mlua::Lua;
+//! # use mlua_derive_unofficial::{FromLua, ToLua};
 //! # #[derive(FromLua, ToLua)]
-//! #[rlua(array)]
+//! #[mlua(array)]
 //! struct SimpleStruct {
 //!     message: String,
 //!     count: u64,
@@ -209,14 +205,14 @@ mod to_lua;
 use crate::proc_macro::TokenStream;
 use syn;
 
-#[proc_macro_derive(FromLua, attributes(rlua))]
+#[proc_macro_derive(FromLua, attributes(mlua))]
 pub fn from_lua_derive(input: TokenStream) -> TokenStream {
     let ast = syn::parse(input).unwrap();
 
     from_lua::impl_from_lua(&ast)
 }
 
-#[proc_macro_derive(ToLua, attributes(rlua))]
+#[proc_macro_derive(ToLua, attributes(mlua))]
 pub fn to_lua_derive(input: TokenStream) -> TokenStream {
     let ast = syn::parse(input).unwrap();
 

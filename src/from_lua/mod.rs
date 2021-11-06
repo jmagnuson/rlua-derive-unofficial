@@ -41,16 +41,16 @@ fn struct_named_from_lua(fields: &FieldsNamed, name: &Ident) -> TokenStream {
 
     let gen = quote!{
         #[automatically_derived]
-        impl<'lua> ::rlua::FromLua<'lua> for #name {
-            fn from_lua(value: ::rlua::Value<'lua>, lua: ::rlua::Context<'lua>) -> ::rlua::Result<Self> {
-                use ::rlua::Table;
+        impl<'lua> ::mlua::FromLua<'lua> for #name {
+            fn from_lua(value: ::mlua::Value<'lua>, lua: &'lua ::mlua::Lua) -> ::mlua::Result<Self> {
+                use ::mlua::Table;
 
-                if let ::rlua::Value::Table(t) = value {
+                if let ::mlua::Value::Table(t) = value {
                     Ok(Self{
                         #fields_code
                     })
                 } else {
-                    Err(rlua::Error::FromLuaConversionError {
+                    Err(mlua::Error::FromLuaConversionError {
                         from: "something not a table",
                         to: stringify!(#name),
                         message: None,
@@ -80,16 +80,16 @@ fn struct_unnamed_from_lua(fields: &FieldsUnnamed, name: &Ident) -> TokenStream 
 
     let gen = quote!{
         #[automatically_derived]
-        impl<'lua> ::rlua::FromLua<'lua> for #name {
-            fn from_lua(value: ::rlua::Value<'lua>, lua: ::rlua::Context<'lua>) -> ::rlua::Result<Self> {
-                use ::rlua::Table;
+        impl<'lua> ::mlua::FromLua<'lua> for #name {
+            fn from_lua(value: ::mlua::Value<'lua>, lua: &'lua ::mlua::Lua) -> ::mlua::Result<Self> {
+                use ::mlua::Table;
 
-                if let ::rlua::Value::Table(t) = value {
+                if let ::mlua::Value::Table(t) = value {
                     Ok(Self(
                         #fields_code
                     ))
                 } else {
-                    Err(rlua::Error::FromLuaConversionError {
+                    Err(mlua::Error::FromLuaConversionError {
                         from: "something not a table",
                         to: stringify!(#name),
                         message: None,
@@ -104,14 +104,14 @@ fn struct_unnamed_from_lua(fields: &FieldsUnnamed, name: &Ident) -> TokenStream 
 fn struct_unit_from_lua(name: &Ident) -> TokenStream {
     let gen = quote!{
         #[automatically_derived]
-        impl<'lua> ::rlua::FromLua<'lua> for #name {
-            fn from_lua(value: ::rlua::Value<'lua>, lua: ::rlua::Context<'lua>) -> ::rlua::Result<Self> {
-                use ::rlua::Table;
+        impl<'lua> ::mlua::FromLua<'lua> for #name {
+            fn from_lua(value: ::mlua::Value<'lua>, lua: &'lua ::mlua::Lua) -> ::mlua::Result<Self> {
+                use ::mlua::Table;
 
-                if let ::rlua::Value::Table(t) = value {
+                if let ::mlua::Value::Table(t) = value {
                     Ok(Self)
                 } else {
-                    Err(rlua::Error::FromLuaConversionError {
+                    Err(mlua::Error::FromLuaConversionError {
                         from: "something not a table",
                         to: stringify!(#name),
                         message: None,
@@ -129,18 +129,18 @@ fn enum_from_lua(name: &Ident, e: &DataEnum, attrs: EnumContainerAttrs) -> Token
     let get_key_and_value = match (&attrs.tag, &attrs.content) {
         (Some(tag), Some(content)) => quote! {
             let lua_key: String = t.get(#tag)?;
-            let lua_value: ::rlua::Value = t.get(#content)?;
+            let lua_value: ::mlua::Value = t.get(#content)?;
         },
         (Some(tag), None) => quote! {
             let lua_key: String = t.get(#tag)?;
-            let lua_value: ::rlua::Value = t.get(lua_key.as_str())?;
+            let lua_value: ::mlua::Value = t.get(lua_key.as_str())?;
         },
         // TODO: possible to support untagged enums?
         (None, Some(_content)) => panic!("can't specify content without key"),
         (None, None) => quote! {
-            let (lua_key, lua_value) : (String, ::rlua::Value) = t.pairs().nth(0)
+            let (lua_key, lua_value) : (String, ::mlua::Value) = t.pairs().nth(0)
                 .ok_or_else(|| {
-                    ::rlua::Error::FromLuaConversionError {
+                    ::mlua::Error::FromLuaConversionError {
                         from: "table",
                         to: stringify!(#name),
                         message: Some("table was empty".to_string()),
@@ -158,7 +158,7 @@ fn enum_from_lua(name: &Ident, e: &DataEnum, attrs: EnumContainerAttrs) -> Token
 
         match_arms.extend(quote! {
             #lua_variant_name => {
-                Ok(#name::#ident(::rlua::FromLua::from_lua(lua_value, lua)?))
+                Ok(#name::#ident(::mlua::FromLua::from_lua(lua_value, lua)?))
             },
         });
     }
@@ -167,7 +167,7 @@ fn enum_from_lua(name: &Ident, e: &DataEnum, attrs: EnumContainerAttrs) -> Token
                 match lua_key.as_str() {
                     #match_arms
                     unknown_key =>
-                        Err(::rlua::Error::FromLuaConversionError {
+                        Err(::mlua::Error::FromLuaConversionError {
                             from: "table",
                             to: stringify!(#name),
                             message: Some(format!("unknown variant: {}", unknown_key)),
@@ -177,9 +177,9 @@ fn enum_from_lua(name: &Ident, e: &DataEnum, attrs: EnumContainerAttrs) -> Token
 
     let gen = quote! {
         #[automatically_derived]
-        impl<'lua> ::rlua::FromLua<'lua> for #name {
-            fn from_lua(value: ::rlua::Value<'lua>, lua: ::rlua::Context<'lua>) -> ::rlua::Result<Self> {
-                let t: ::rlua::Table = ::rlua::FromLua::from_lua(value, lua)?;
+        impl<'lua> ::mlua::FromLua<'lua> for #name {
+            fn from_lua(value: ::mlua::Value<'lua>, lua: &'lua ::mlua::Lua) -> ::mlua::Result<Self> {
+                let t: ::mlua::Table = ::mlua::FromLua::from_lua(value, lua)?;
 
                 #get_key_and_value
 
